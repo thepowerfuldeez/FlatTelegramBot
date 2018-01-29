@@ -1,19 +1,19 @@
 # noinspection PyUnresolvedReferences
 import telebot
 import logging
-from config import TOKEN
+from config import TG_TOKEN
 
-bot = telebot.TeleBot(TOKEN)
+bot = telebot.TeleBot(TG_TOKEN)
 
 
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
-    bot.reply_to(message, "Howdy, how are you doing?")
+    bot.reply_to(message, "Привет, я буду присылать новые \nкомнаты в центре, подписывайся на рассылку.")
 
 
 @bot.message_handler(func=lambda message: True)
 def echo_all(message):
-    bot.reply_to(message, message.text)
+    bot.send_message(message.chat.id, message.text)
 
 
 logger = telebot.logger
