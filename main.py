@@ -1,31 +1,41 @@
-# noinspection PyUnresolvedReferences
-import telebot
+from telegram.ext import Updater, CommandHandler
 import logging
 from config import TG_TOKEN, VK_PUBLICS_LIST
 from vk_module import get_public_updates
+from processing_module import is_center_room
 
-bot = telebot.TeleBot(TG_TOKEN)
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
+post_link = "https://vk.com/wall-{public_id}_{post_id}"
 
-
-@bot.message_handler(commands=['start', 'help'])
-def send_welcome(message):
-    bot.reply_to(message, "Привет, я буду присылать новые \nкомнаты в центре, подписывайся на рассылку.")
-
-
-@bot.message_handler(func=lambda message: True)
-def echo_all(message):
-    bot.send_message(message.chat.id, message.text)
+updater = Updater(token=TG_TOKEN)
+dispatcher = updater.dispatcher
+logger = updater.logger
 
 
-@bot.message_handler(commands=['start', 'help'])
-def parse_vk(message):
+def start(bot, update):
+    bot.send_message(chat_id=update.message.chat_id,
+                     text="Привет, я буду присылать новые \nкомнаты в центре, подписывайся на рассылку.")
+
+
+def parse_vk(bot, update):
     wall_data = []
+    logger.info("Start parsing")
     for public_id in VK_PUBLICS_LIST:
-        wall_data += get_public_updates(public_id)
+        wall_data += get_public_updates(public_id, 100)
+    logger.info("End parsing")
+    for post in wall_data:
+        timestamp = post['date']
+        text = post['text']
+        # public_id = -post['owner_id']
+        public_id = -post['from_id']
+        post_id = post['id']
+        if is_center_room(text):
+            bot.send_message(chat_id=update.message.chat_id,
+                             text=post_link.format(public_id=public_id, post_id=post_id))
+        else:
+            logger.info(f"{post_id} is not center room")
 
-    bot.send_message(message.chat.id, )
 
-
-logger = telebot.logger
-telebot.logger.setLevel(logging.DEBUG) # Outputs debug messages to console.
-bot.polling()
+dispatcher.add_handler(CommandHandler('start', start))
+dispatcher.add_handler(CommandHandler('parse', parse_vk))
+updater.start_polling()
