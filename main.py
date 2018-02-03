@@ -6,11 +6,8 @@ from processing_module import process_text
 from sql_module import execute_query
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 post_link = "https://vk.com/wall-{public_id}_{post_id}"
-
-updater = Updater(token=TG_TOKEN)
-dispatcher = updater.dispatcher
-logger = updater.logger
 
 
 def start(bot, update):
@@ -33,13 +30,27 @@ def parse_vk(bot, update):
         if md5:
             available_hashes = {a[0] for a in execute_query("SELECT md5 FROM hashes")}
             if md5 not in available_hashes:
-                bot.send_message(chat_id=update.message.chat_id,
+                bot.send_message(chat_id="@instantflats",
                                  text=post_link.format(public_id=public_id, post_id=post_id))
                 execute_query("INSERT INTO hashes VALUES (?, ?)", (md5, timestamp))
         else:
             logger.info(f"{post_id} is not center room")
 
 
-dispatcher.add_handler(CommandHandler('start', start))
-dispatcher.add_handler(CommandHandler('parse', parse_vk))
-updater.start_polling()
+def main():
+    updater = Updater(token=TG_TOKEN)
+    job_queue = updater.job_queue
+    job_queue.run_repeating(parse_vk, interval=60, first=0)
+    job_queue.start()
+
+
+if __name__ == '__main__':
+    # main()
+    with open("rooms.txt", "w") as f:
+        for i in range(5):
+            wall = get_public_updates(VK_PUBLICS_LIST[0], 100, i*100)
+            for post in wall:
+                processed = process_text(post['text'], 1)
+                if processed:
+                    print(processed, file=f)
+
