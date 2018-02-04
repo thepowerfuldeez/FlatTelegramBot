@@ -45,12 +45,4 @@ def main():
 
 
 if __name__ == '__main__':
-    # main()
-    with open("rooms.txt", "w") as f:
-        for i in range(5):
-            wall = get_public_updates(VK_PUBLICS_LIST[0], 100, i*100)
-            for post in wall:
-                processed = process_text(post['text'], 1)
-                if processed:
-                    print(processed, file=f)
-
+    main()
