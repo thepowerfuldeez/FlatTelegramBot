@@ -1,7 +1,7 @@
 import vk
-from config import VK_TOKEN
+import os
 
-vk_session = vk.Session(access_token=VK_TOKEN)
+vk_session = vk.Session(access_token=os.environ.get("VK_TOKEN"))
 vk = vk.API(vk_session)
 
 

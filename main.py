@@ -1,6 +1,6 @@
 from telegram.ext import Updater, CommandHandler
 import logging
-from config import TG_TOKEN, VK_PUBLICS_LIST
+import os
 from vk_module import get_public_updates
 from processing_module import process_text
 from sql_module import execute_query
@@ -8,6 +8,7 @@ from sql_module import execute_query
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 post_link = "https://vk.com/wall-{public_id}_{post_id}"
+VK_PUBLICS_LIST = [57466174, 133717012, 1850339]
 
 
 def start(bot, update):
@@ -38,9 +39,9 @@ def parse_vk(bot, update):
 
 
 def main():
-    updater = Updater(token=TG_TOKEN)
+    updater = Updater(token=os.environ.get("TG_TOKEN"))
     job_queue = updater.job_queue
-    job_queue.run_repeating(parse_vk, interval=60, first=0)
+    job_queue.run_repeating(parse_vk, interval=360, first=0)
     job_queue.start()
 
 
