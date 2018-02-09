@@ -25,19 +25,34 @@ def utility_price(match):
         return 0
 
 
-def process_text(text, verbose=0):
+def lemmatize(text):
     tokens = tokenizer.tokenize(text)
     lemmatized = list(map(lambda word: hardcoded_mistakes.get(word, word),  # replacing word from dict if exists
                           (morph.parse(token)[0].normal_form for token in tokens)))
+    return lemmatized
+
+
+def md5_hash(s):
+    return hashlib.md5(s.encode()).hexdigest()
+
+
+def process_text_vk(text, verbose=0):
+    lemmatized = lemmatize(text)
     if "комната" in lemmatized and "хостел" not in lemmatized:
         if wanted_metro_stations & set(lemmatized):
             s = " ".join(lemmatized)
             all_matches = re.findall(price_regexp, s) + ['0']
             price = max(map(utility_price, all_matches))  # if all_matches is empty then 0
             if price <= MAX_PRICE:
-                md5 = hashlib.md5(s.encode()).hexdigest()
                 if verbose:
-                    return " ".join(lemmatized)
-                return md5
+                    return s
+                return md5_hash(s)
     return ""
 
+
+def process_text_avito(text):
+    lemmatized = lemmatize(text)
+    if lemmatized:
+        s = " ".join(lemmatized)
+        return md5_hash(s)
+    return ""
