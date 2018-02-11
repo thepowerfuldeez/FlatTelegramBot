@@ -10,7 +10,7 @@ from sql_module import execute_query
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 post_link = "https://vk.com/wall-{public_id}_{post_id}"
-VK_PUBLICS_LIST = [57466174, 133717012, 1850339]
+VK_PUBLICS_LIST = [57466174, 133717012, 1850339, 90529595, 12022371]
 
 
 def start(bot, update):
