@@ -1,6 +1,7 @@
 from telegram.ext import Updater, CommandHandler
 import logging
 import os
+import time
 import datetime
 from vk_module import get_public_updates
 from avito_module import get_avito_feed
@@ -26,6 +27,7 @@ def send_message_and_update(bot, text, md5, timestamp):
         bot.send_message(chat_id="@instantflats",
                          text=text)
         execute_query("INSERT INTO hashes VALUES (?, ?)", (md5, timestamp))
+        time.sleep(1)
 
 
 def parse_vk(bot, update):
@@ -61,7 +63,7 @@ def main():
     updater = Updater(token=os.environ.get("TG_TOKEN"))
     job_queue = updater.job_queue
     job_queue.run_repeating(parse_vk, interval=360, first=0)
-    job_queue.run_repeating(parse_avito, interval=360, first=0)
+    job_queue.run_repeating(parse_avito, interval=720, first=180)
     job_queue.start()
 
 
