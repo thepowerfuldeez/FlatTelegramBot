@@ -10,12 +10,15 @@ from sql_module import execute_query
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 post_link = "https://vk.com/wall-{public_id}_{post_id}"
-VK_PUBLICS_LIST = [57466174, 133717012, 1850339, 90529595, 12022371]
+VK_PUBLICS_LIST = [57466174, 133717012, 1850339, 90529595, 12022371, 126712296, 150611459, 1744988, 28618880, 27701671,
+                   35098427]
+# https://vk.com/topic-12022371_36100298?offset=300
+# https://vk.com/topic-90529595_34531077?offset=1400
+# https://vk.com/topic-150611459_35921948?offset=340
+# https://vk.com/topic-1744988_21328151?offset=30300
+# https://vk.com/topic-28618880_36966519?offset=100
+# https://vk.com/topic-27701671_24755429?offset=15460
 
-
-def start(bot, update):
-    bot.send_message(chat_id=update.message.chat_id,
-                     text="Привет, я буду присылать новые \nкомнаты в центре, подписывайся на рассылку.")
 
 def send_message_and_update(bot, text, md5, timestamp):
     available_hashes = {a[0] for a in execute_query("SELECT md5 FROM hashes")}

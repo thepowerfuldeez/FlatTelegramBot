@@ -3,7 +3,7 @@ import re
 from nltk.tokenize import RegexpTokenizer
 import hashlib
 
-MAX_PRICE = 12  # 12 thousand as we are truncating strings via re
+MAX_PRICE = 16  # 16 thousand as we are truncating strings via re
 
 tokenizer = RegexpTokenizer(r'[а-яА-Я0-9]+|[0-9.,]+')
 morph = pymorphy2.MorphAnalyzer()
