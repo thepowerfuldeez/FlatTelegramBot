@@ -35,6 +35,7 @@ def parse_vk(bot, update):
     logger.info("Start parsing")
     for public_id in VK_PUBLICS_LIST:
         wall_data += get_public_updates(public_id, 10)
+        time.sleep(0.5)
     logger.info("End parsing")
     for post in wall_data:
         timestamp = post['date'] * 1000
