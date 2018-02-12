@@ -7,4 +7,4 @@ import feedparser
 
 def get_avito_feed():
     d = feedparser.parse(AVITO_RSS)
-    return [(entry.title, entry.link, entry.content[0].value, entry.updated) for entry in d.entries]
+    return [(entry.title, entry.link, entry.content[0].value, entry.updated) for entry in d.entries[:10]]
