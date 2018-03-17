@@ -3,12 +3,13 @@ import re
 from nltk.tokenize import RegexpTokenizer
 import hashlib
 
-MAX_PRICE = 16  # 16 thousand as we are truncating strings via re
+MAX_PRICE = 25  # 25 thousand as we are truncating strings via re
 
 tokenizer = RegexpTokenizer(r'[а-яА-Я0-9]+|[0-9.,]+')
 morph = pymorphy2.MorphAnalyzer()
-wanted_metro_stations = {"александр", "обводный", "фрунзенская", "ворота", "электросила", "нарвская",
-                         "речка", "петроградская", "выборгский", "ленин"}
+wanted_metro_stations = {'лесной', 'выборгский', 'ленин', 'чёрный', 'петроградский', 'чкаловский', 'приморский',
+                         'новочеркасский', 'александр', 'обводный', 'фрунзенский', 'ворот', 'электросила', 'парк',
+                         'московский', 'балтийский', 'нарвский', 'завод', 'автовый'}
 hardcoded_mistakes = {"том": "тысяча", "тр": "тысяча", "метр": "метро", "мина": "минута",
                       "ряд": "рядом", "далее": "дом", "хостела": "хостел"}  # pymorphy mistakes
 price_regexp = r'(?<![0-9])([0-9.,]{4,5}|[0-9.,]{2})\s*(рубль|тысяча|[0-9]{3}(?![0-9])|к(?!.))'
@@ -38,8 +39,7 @@ def md5_hash(s):
 
 def process_text_vk(text, verbose=0):
     lemmatized = lemmatize(text)
-    if "комната" in lemmatized and "квартира" in lemmatized and "хостел" not in lemmatized \
-            and "сосед" not in lemmatized:
+    if "сосед" not in lemmatized:
         if wanted_metro_stations & set(lemmatized):
             s = " ".join(lemmatized)
             all_matches = re.findall(price_regexp, s) + ['0']
