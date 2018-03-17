@@ -7,8 +7,8 @@ MAX_PRICE = 16  # 16 thousand as we are truncating strings via re
 
 tokenizer = RegexpTokenizer(r'[а-яА-Я0-9]+|[0-9.,]+')
 morph = pymorphy2.MorphAnalyzer()
-wanted_metro_stations = {"технологический", "звенигородская", "спасская", "сенная", "садовая", "чернышевская",
-                         "восстание", "лиговский", "владимирская", "достоевская", "маяковский", "пушкинская"}
+wanted_metro_stations = {"александр", "обводный", "фрунзенская", "ворота", "электросила", "нарвская",
+                         "электросила", "парк"}
 hardcoded_mistakes = {"том": "тысяча", "тр": "тысяча", "метр": "метро", "мина": "минута",
                       "ряд": "рядом", "далее": "дом", "хостела": "хостел"}  # pymorphy mistakes
 price_regexp = r'(?<![0-9])([0-9.,]{4,5}|[0-9.,]{2})\s*(рубль|тысяча|[0-9]{3}(?![0-9])|к(?!.))'
@@ -38,7 +38,8 @@ def md5_hash(s):
 
 def process_text_vk(text, verbose=0):
     lemmatized = lemmatize(text)
-    if "комната" in lemmatized and "хостел" not in lemmatized:
+    if "комната" in lemmatized and "квартира" in lemmatized and "хостел" not in lemmatized \
+            and "сосед" not in lemmatized:
         if wanted_metro_stations & set(lemmatized):
             s = " ".join(lemmatized)
             all_matches = re.findall(price_regexp, s) + ['0']
