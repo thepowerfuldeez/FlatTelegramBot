@@ -63,7 +63,7 @@ def parse_avito(bot, update):
 def main():
     updater = Updater(token=os.environ.get("TG_TOKEN"))
     job_queue = updater.job_queue
-    job_queue.run_repeating(parse_vk, interval=360, first=0)
+    # job_queue.run_repeating(parse_vk, interval=360, first=0)
     job_queue.run_repeating(parse_avito, interval=720, first=180)
     job_queue.start()
 
