@@ -20,8 +20,6 @@ api.add_rules(f"rule_3", "квартира сдам комната спб")
 #     api.add_rules(f"rule_{i}", keyword)
 
 print("currently", len(api.get_rules()), "rules loaded")
-bot = Bot(TG_TOKEN)
-bot.send_message(chat_id="@instantflats", text="bot is initialised")
 
 
 @api.stream
