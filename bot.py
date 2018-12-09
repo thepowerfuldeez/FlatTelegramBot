@@ -7,12 +7,12 @@ import data
 
 
 def hello(bot, update):
-    bot.send_message(chat_id="@instantflats", message="bot is initialised")
+    bot.send_message(chat_id="@instantflats", text="bot is initialised")
 
 
 def send_event(bot, update):
     while len(data.events_stack):
-        bot.send_message(chat_id="@instantflats", message=data.events_stack.pop(0))
+        bot.send_message(chat_id="@instantflats", text=data.events_stack.pop(0))
 
 
 def main():
