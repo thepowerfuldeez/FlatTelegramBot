@@ -24,10 +24,10 @@ bot.send_message(chat_id="@instantflats", text="bot is initialised")
 @api.stream
 def my_func(event):
     event_text = event['text']
-    if event_text not in data.events:
-        data.update_data(event_text)
+    if event_text not in data.seen:
         if "attachments" in event:
-            bot.send_message(chat_id="@instantflats", text=f"{event['event_type']}, {event['event_url']}, {event['text']}")
+            data.events_stack.append(f"{event['event_type']}, {event['event_url']}, {event['text']}")
+            data.update_data(event_text)
 
 
     # if event['event_type'] == "post":

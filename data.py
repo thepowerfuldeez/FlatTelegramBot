@@ -1,11 +1,13 @@
 import pickle
 
 try:
-    events = pickle.load(open("events.p", "rb"))
+    seen = pickle.load(open("seen.p", "rb"))
 except:
-    events = set()
+    seen = set()
 
 
 def update_data(text):
-    events.add(text)
-    pickle.dump(events, open("events.p", "wb"))
+    seen.add(text)
+    pickle.dump(seen, open("seen.p", "wb"))
+
+events_stack = []
