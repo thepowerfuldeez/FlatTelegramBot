@@ -26,6 +26,7 @@ def my_func(event):
     event_text = event['text']
     if event_text not in data.seen:
         if "attachments" in event:
+            print("adding new event")
             data.events_stack.append(f"{event['event_type']}, {event['event_url']}, {event['text']}")
             data.update_data(event_text)
 
