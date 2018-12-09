@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 from vkstreaming import getServerUrl, Streaming
 from config import SERVICE_TOKEN, TG_TOKEN
 from telegram import Bot
