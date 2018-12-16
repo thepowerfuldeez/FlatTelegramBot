@@ -15,6 +15,10 @@ post_link = "https://vk.com/wall-{public_id}_{post_id}"
 VK_PUBLICS_LIST = [57466174, 133717012, 1850339, 90529595, 12022371, 126712296, 150611459, 1744988, 28618880, 27701671,
                    35098427]
 
+REQUEST_KWARGS={
+    'proxy_url': 'socks5://78.47.225.59:9050'
+}
+
 # https://vk.com/topic-12022371_36100298?offset=300
 # https://vk.com/topic-90529595_34531077?offset=1400
 # https://vk.com/topic-150611459_35921948?offset=340
@@ -84,7 +88,7 @@ def parse_avito(bot, update):
 
 def main():
     print("history count", db.history.count())
-    updater = Updater(TG_TOKEN)
+    updater = Updater(TG_TOKEN, request_kwargs=REQUEST_KWARGS)
     job_queue = updater.job_queue
     job_queue.run_repeating(parse_vk, interval=360, first=0)
     job_queue.run_repeating(parse_avito, interval=600, first=0)
