@@ -10,6 +10,7 @@ verify_ssl = true
 python-telegram-bot = "*"
 requests = "*"
 vk_api = "*"
+pymongo = "*"
 nltk = "*"
 feedparser = "*"
 

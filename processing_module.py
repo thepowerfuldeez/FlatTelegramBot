@@ -46,9 +46,7 @@ def process_text_vk(text, verbose=0):
             all_matches = re.findall(price_regexp, s) + ['0']
             price = max(map(utility_price, all_matches))  # if all_matches is empty then 0
             if price <= MAX_PRICE:
-                if verbose:
-                    return s
-                return md5_hash(s)
+                return s
     return ""
 
 
@@ -56,5 +54,5 @@ def process_text_avito(text):
     lemmatized = lemmatize(text)
     if lemmatized:
         s = " ".join(lemmatized)
-        return md5_hash(s)
+        return s
     return ""
