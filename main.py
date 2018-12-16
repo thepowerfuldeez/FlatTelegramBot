@@ -46,7 +46,6 @@ def parse_vk(bot, update):
     logger.info("End parsing vk")
     for post in wall_data:
         if 'attachments' in post:
-            print([item.keys() for item in post['attachments']])
             items = filter(lambda item: item['type'] == "photo", post['attachments'])
             img_links = [item['photo'].get('photo_604', "") for item in items]
             img_links = list(filter(lambda x: x != "", img_links))
