@@ -16,7 +16,9 @@ VK_PUBLICS_LIST = [57466174, 133717012, 1850339, 90529595, 12022371, 126712296, 
                    35098427]
 
 REQUEST_KWARGS={
-    'proxy_url': 'socks5://78.47.225.59:9050'
+    'proxy_url': 'socks5://78.47.225.59:9050',
+    'connect_timeout': 15.,
+    'read_timeout': 15.
 }
 
 # https://vk.com/topic-12022371_36100298?offset=300
@@ -31,7 +33,7 @@ def send_messages(bot):
     for post in db.flats.find({'sent': False}):
         bot.send_message(chat_id="@instantflats",
                          text=post['link'])
-        db.flats.update_one({"text": post['text']}, {"sent": True})
+        db.flats.update_one({"text": post['text']}, {"$set": {"sent": True}})
         time.sleep(0.5)
 
 
