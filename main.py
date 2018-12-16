@@ -48,7 +48,8 @@ def parse_vk(bot, update):
         if 'attachments' in post:
             img_links = [item.get('photo_604', "") for item in post['attachments'] if item['type'] == "photo"]
             img_links = list(filter(lambda x: x != "", img_links))
-            if img_links:
+            print(img_links)
+            if len(img_links):
                 timestamp = post['date'] * 1000
                 text = post['text']
                 public_id = -post['from_id']
