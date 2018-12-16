@@ -41,21 +41,23 @@ def parse_vk(bot, update):
     for post in wall_data:
         if 'attachments' in post:
             img_links = [item.get('photo_604', "") for item in post['attachments'] if item['type'] == "photo"]
-            timestamp = post['date'] * 1000
-            text = post['text']
-            public_id = -post['from_id']
-            post_id = post['id']
-            s = process_text_vk(text)
-            if s and db.flats.find({"text": s}).limit(1).count() == 0:
-                post_id = db.flats.insert_one({
-                    "text": s,
-                    "link": f"https://vk.com/wall-{public_id}_{post_id}",
-                    "from": "vk",
-                    "sent": False,
-                }).inserted_id
-                img_paths = [save_img(link) for link in img_links]
-            else:
-                logger.info(f"{post_id} is not center room")
+            img_links = list(filter(lambda x: x != "", img_links))
+            if img_links:
+                timestamp = post['date'] * 1000
+                text = post['text']
+                public_id = -post['from_id']
+                post_id = post['id']
+                s = process_text_vk(text)
+                if s and db.flats.find({"text": s}).limit(1).count() == 0:
+                    post_id = db.flats.insert_one({
+                        "text": s,
+                        "link": f"https://vk.com/wall-{public_id}_{post_id}",
+                        "from": "vk",
+                        "sent": False,
+                    }).inserted_id
+                    img_paths = [save_img(link) for link in img_links]
+                else:
+                    logger.info(f"{post_id} is not center room")
     send_messages(bot)
 
 
@@ -64,7 +66,7 @@ def parse_avito(bot, update):
     feed = get_avito_feed()
     for item in feed:
         s = process_text_avito(item['text'])
-        img_path = save_img(item['img_link'])
+        img_paths = [save_img(link) for link in item['img_links']]
 
         date = datetime.datetime.strptime(item['updated'], "%Y-%m-%dT%H:%M:%SZ")
         timestamp = int(date.timestamp())
@@ -90,7 +92,6 @@ def main():
 
 
 if __name__ == '__main__':
-    # main()
-    print(get_public_updates(VK_PUBLICS_LIST[0])[0])
+    main()
 
 

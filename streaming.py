@@ -3,7 +3,6 @@
 
 from vkstreaming import getServerUrl, Streaming
 from config import SERVICE_TOKEN, TG_TOKEN
-from telegram import Bot
 from data import db, check_duplicates
 from processing_module import process_text_vk
 

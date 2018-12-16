@@ -5,6 +5,8 @@ AVITO_RSS_ARRAY = ["https://avito2rss.duck.consulting/feeds/13825.atom",
                    "https://avito2rss.duck.consulting/feeds/13826.atom"]
 import feedparser
 import time
+import re
+expr = r'http.*\.jpg'
 
 
 def get_avito_feed():
@@ -15,7 +17,8 @@ def get_avito_feed():
             "title": entry.title,
             "link": entry.link,
             "text": entry.content[0].value,
-            "updated": entry.updated
+            "updated": entry.updated,
+            "img_links": re.findall(expr, entry.content[0].value)
         } for entry in d.entries[:10]])
         time.sleep(0.5)
     return feed
@@ -23,4 +26,4 @@ def get_avito_feed():
 
 if __name__ == "__main__":
     feed = get_avito_feed()
-    print(feed[0])
+    # print(feed[0])
