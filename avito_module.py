@@ -1,23 +1,26 @@
 # Using http://avito2rss.bitcheese.net
-# avito link – https://www.avito.ru/sankt-peterburg/sport_i_otdyh/drugoe?s=104&user=1&q=электросамокат+xiaomi
+# avito link – https://www.avito.ru/sankt-peterburg/kvartiry/sdam/na_dlitelnyy_srok?f=550_5702-5703&metro=156-158-163-164-173-185-189-194-201-202-203-209-211-1015-2197&s=104&s_trg=3&user=1
 
-AVITO_RSS_ARRAY = ["http://avito2rss.bitcheese.net/feeds/8871.atom",
-                   "http://avito2rss.bitcheese.net/feeds/8872.atom",
-                   "http://avito2rss.bitcheese.net/feeds/8873.atom",
-                   "http://avito2rss.bitcheese.net/feeds/8883.atom",
-                   "http://avito2rss.bitcheese.net/feeds/8884.atom",
-                   "http://avito2rss.bitcheese.net/feeds/8885.atom",
-                   "http://avito2rss.bitcheese.net/feeds/8886.atom"]
+AVITO_RSS_ARRAY = ["https://avito2rss.duck.consulting/feeds/13825.atom",
+                   "https://avito2rss.duck.consulting/feeds/13826.atom"]
 import feedparser
 import time
 
 
 def get_avito_feed():
     feed = []
-    for i, AVITO_RSS in enumerate(AVITO_RSS_ARRAY):
-        d = feedparser.parse(AVITO_RSS)
-        if i > 2:
-            feed.extend([("МСК " + entry.title, entry.link, entry.content[0].value, entry.updated)
-                         for entry in d.entries[:5]])
+    for avito_rss in AVITO_RSS_ARRAY:
+        d = feedparser.parse(avito_rss)
+        feed.extend([{
+            "title": entry.title,
+            "link": entry.link,
+            "text": entry.content[0].value,
+            "updated": entry.updated
+        } for entry in d.entries[:10]])
         time.sleep(0.5)
     return feed
+
+
+if __name__ == "__main__":
+    feed = get_avito_feed()
+    print(feed[0])

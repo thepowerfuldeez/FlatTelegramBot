@@ -7,7 +7,7 @@ from vk_module import get_public_updates
 from avito_module import get_avito_feed
 from processing_module import process_text_vk, process_text_avito
 from config import TG_TOKEN
-from data import db
+from data import db, check_duplicates, IMG_PATH, save_img
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -23,43 +23,61 @@ VK_PUBLICS_LIST = [57466174, 133717012, 1850339, 90529595, 12022371, 126712296, 
 # https://vk.com/topic-27701671_24755429?offset=15460
 
 
-def send_message_and_update(bot, text, link, key):
-    print(db.history.find({'text': text}).limit(1).count())
-    if db.history.find({'text': text}).limit(1).count() == 0:
+def send_messages(bot):
+    for post in db.flats.find({'sent': False}):
         bot.send_message(chat_id="@instantflats",
-                         text=link)
-        post_id = db.history.insert_one({"text": text, "link": link}).inserted_id
-    time.sleep(1)
+                         text=post['link'])
+        db.flats.update_one({"text": post['text']}, {"sent": True})
+    time.sleep(0.5)
 
 
 def parse_vk(bot, update):
     wall_data = []
-    logger.info("Start parsing")
+    logger.info("Start parsing vk")
     for public_id in VK_PUBLICS_LIST:
         wall_data += get_public_updates(public_id, 10)
         time.sleep(0.5)
-    logger.info("End parsing")
+    logger.info("End parsing vk")
     for post in wall_data:
-        timestamp = post['date'] * 1000
-        text = post['text']
-        public_id = -post['from_id']
-        post_id = post['id']
-        s = process_text_vk(text)
-        if s:
-            send_message_and_update(bot, s, post_link.format(public_id=public_id, post_id=post_id), "vk")
-        else:
-            logger.info(f"{post_id} is not center room")
+        if 'attachments' in post:
+            img_links = [item.get('photo_604', "") for item in post['attachments'] if item['type'] == "photo"]
+            timestamp = post['date'] * 1000
+            text = post['text']
+            public_id = -post['from_id']
+            post_id = post['id']
+            s = process_text_vk(text)
+            if s and db.flats.find({"text": s}).limit(1).count() == 0:
+                post_id = db.flats.insert_one({
+                    "text": s,
+                    "link": f"https://vk.com/wall-{public_id}_{post_id}",
+                    "from": "vk",
+                    "sent": False,
+                }).inserted_id
+                img_paths = [save_img(link) for link in img_links]
+            else:
+                logger.info(f"{post_id} is not center room")
+    send_messages(bot)
 
 
 def parse_avito(bot, update):
-    rss = get_avito_feed()
-    for title, link, text, timestring in rss:
-        s = process_text_avito(text)
-        date = datetime.datetime.strptime(timestring, "%Y-%m-%dT%H:%M:%SZ")
+    logger.info("Start parsing avito")
+    feed = get_avito_feed()
+    for item in feed:
+        s = process_text_avito(item['text'])
+        img_path = save_img(item['img_link'])
+
+        date = datetime.datetime.strptime(item['updated'], "%Y-%m-%dT%H:%M:%SZ")
         timestamp = int(date.timestamp())
         timedelta = datetime.datetime.now() - date
-        if s and timedelta.days < 1:
-            send_message_and_update(bot, title, link, "avito")
+        if s and timedelta.days < 1 and check_duplicates(s):
+            post_id = db.flats.insert_one({
+                "text": s,
+                "link": item['link'],
+                "from": "avito",
+                "sent": False,
+            }).inserted_id
+    logger.info("End parsing avito")
+    send_messages(bot)
 
 
 def main():
@@ -72,6 +90,7 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    # main()
+    print(get_public_updates(VK_PUBLICS_LIST[0])[0])
 
 

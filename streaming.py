@@ -4,7 +4,8 @@
 from vkstreaming import getServerUrl, Streaming
 from config import SERVICE_TOKEN, TG_TOKEN
 from telegram import Bot
-import data
+from data import db, check_duplicates
+from processing_module import process_text_vk
 
 
 response = getServerUrl(SERVICE_TOKEN)
@@ -15,21 +16,23 @@ api.add_rules(f"rule_1", "квартира снимать комната спб"
 api.add_rules(f"rule_2", "квартира сдавать комната спб")
 api.add_rules(f"rule_3", "квартира сдам комната спб")
 
-# rules = open("event_classifier/rules.txt").read().split("\n")
-# for i, keyword in enumerate(rules, 1):
-#     api.add_rules(f"rule_{i}", keyword)
-
 print("currently", len(api.get_rules()), "rules loaded")
 
 
 @api.stream
 def my_func(event):
     event_text = event['text']
-    if event_text not in data.seen:
-        if "attachments" in event:
+    if "attachments" in event:
+        # img_links = [item['photo_link'] for item in event['attachments']]
+        s = process_text_vk(event_text)
+        if s and check_duplicates(s):
             print("adding new event")
-            data.update_stack(f"{event['event_type']}, {event['event_url']}, {event['text']}")
-            data.update_data(event_text)
+            post_id = db.flats.insert_one({
+                "text": s,
+                "link": event['event_url'],
+                "from": "vk_streaming",
+                "sent": False,
+            }).inserted_id
 
 
     # if event['event_type'] == "post":
