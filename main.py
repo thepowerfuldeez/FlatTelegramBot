@@ -23,14 +23,6 @@ VK_PUBLICS_LIST = [57466174, 133717012, 1850339, 90529595, 12022371, 126712296, 
 # https://vk.com/topic-27701671_24755429?offset=15460
 
 
-def send_messages(bot):
-    for post in db.flats.find({'sent': False}):
-        bot.send_message(chat_id="@instantflats",
-                         text=post['link'])
-        db.flats.update_one({"text": post['text']}, {"sent": True})
-    time.sleep(0.5)
-
-
 def parse_vk(bot, update):
     wall_data = []
     logger.info("Start parsing vk")
@@ -58,7 +50,11 @@ def parse_vk(bot, update):
                     img_paths = [save_img(link) for link in img_links]
                 else:
                     logger.info(f"{post_id} is not center room")
-    send_messages(bot)
+    for post in db.flats.find({'sent': False}):
+        bot.send_message(chat_id="@instantflats",
+                         text=post['link'])
+        db.flats.update_one({"text": post['text']}, {"sent": True})
+        time.sleep(0.5)
 
 
 def parse_avito(bot, update):
@@ -79,7 +75,11 @@ def parse_avito(bot, update):
                 "sent": False,
             }).inserted_id
     logger.info("End parsing avito")
-    send_messages(bot)
+    for post in db.flats.find({'sent': False}):
+        bot.send_message(chat_id="@instantflats",
+                         text=post['link'])
+        db.flats.update_one({"text": post['text']}, {"sent": True})
+        time.sleep(0.5)
 
 
 def main():
