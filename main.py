@@ -8,6 +8,7 @@ from avito_module import get_avito_feed
 from processing_module import process_text_vk, process_text_avito
 from config import TG_TOKEN
 from data import db, check_duplicates, IMG_PATH, save_img
+from model import get_prediction
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -56,13 +57,17 @@ def parse_vk(bot, update):
                 post_id = post['id']
                 s = process_text_vk(text)
                 if s and db.flats.find({"text": s}).limit(1).count() == 0:
-                    post_id = db.flats.insert_one({
-                        "text": s,
-                        "link": f"https://vk.com/wall-{public_id}_{post_id}",
-                        "from": "vk",
-                        "sent": False,
-                    }).inserted_id
                     img_paths = [save_img(link) for link in img_links]
+                    classes = []
+                    for img_path in img_paths:
+                        classes.append(get_prediction(img_path))
+                    if any([c == 1 for c in classes]):
+                        post_id = db.flats.insert_one({
+                            "text": s,
+                            "link": f"https://vk.com/wall-{public_id}_{post_id}",
+                            "from": "vk",
+                            "sent": False,
+                        }).inserted_id
                 else:
                     logger.info(f"{post_id} is not center room")
     send_messages(bot)
@@ -78,13 +83,17 @@ def parse_avito(bot, update):
         timestamp = int(date.timestamp())
         timedelta = datetime.datetime.now() - date
         if s and timedelta.days < 1 and check_duplicates(s):
-            post_id = db.flats.insert_one({
-                "text": s,
-                "link": item['link'],
-                "from": "avito",
-                "sent": False,
-            }).inserted_id
             img_paths = [save_img(link) for link in item['img_links']]
+            classes = []
+            for img_path in img_paths:
+                classes.append(get_prediction(img_path))
+            if any([c == 1 for c in classes]):
+                post_id = db.flats.insert_one({
+                    "text": s,
+                    "link": item['link'],
+                    "from": "avito",
+                    "sent": False,
+                }).inserted_id
     logger.info("End parsing avito")
     send_messages(bot)
 
