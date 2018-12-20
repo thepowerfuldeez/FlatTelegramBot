@@ -4,7 +4,7 @@ import pymongo
 from config import MONGO_USER, MONGO_PASSWORD
 
 
-IMG_PATH = "model/real/"
+IMG_PATH = "models/real/"
 
 username = urllib.parse.quote_plus(MONGO_USER)
 password = urllib.parse.quote_plus(MONGO_PASSWORD)
