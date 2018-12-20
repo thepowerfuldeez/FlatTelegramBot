@@ -14,10 +14,11 @@ df = pd.DataFrame({"name": neg+true,
 data = ImageDataBunch.from_df(".", df, ds_tfms=get_transforms(), size=224, bs=8
                                 ).normalize(imagenet_stats)
 learn = create_cnn(data, models.resnet34, metrics=error_rate)
-learn.fit_one_cycle(12, max_lr=5e-3)
-learn.unfreeze()
-learn.fit_one_cycle(8, max_lr=slice(1e-8,5e-6))
-learn.save("/home/george/workspace/FlatTelegramBot/models/model")
+# learn.fit_one_cycle(12, max_lr=5e-3)
+# learn.unfreeze()
+# learn.fit_one_cycle(8, max_lr=slice(1e-8,5e-6))
+# learn.save("/home/george/workspace/FlatTelegramBot/models/model")
+# learn.load("model")
 
 model = learn.model
 model.load_state_dict(t.load("/home/george/workspace/FlatTelegramBot/models/model.pth")['model'])
