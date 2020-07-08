@@ -1,0 +1,21 @@
+[[source]]
+
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+
+
+[packages]
+
+"pymorphy2" = {extras = ["fast"]}
+python-telegram-bot = "*"
+pysocks = "*"
+requests = "*"
+vk_api = "*"
+pymongo = "*"
+nltk = "*"
+feedparser = "*"
+
+
+[requires]
+
+python_version = "3.6.4"

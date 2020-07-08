@@ -1,20 +1,24 @@
-from telegram.ext import Updater, CommandHandler
 import logging
-import os
 import time
 import datetime
-from vk_module import get_public_updates
-from avito_module import get_avito_feed
-from processing_module import process_text_vk, process_text_avito
+
+import telegram.ext
+from telegram.ext import Updater, CommandHandler
+
+from inference.demo import get_prediction
+from parsing import get_avito_feed, get_cian_feed
+from download_lib import pseudo_download_img
+from db import DB
 from config import TG_TOKEN
-from data import db, check_duplicates, IMG_PATH, save_img
-from model import get_prediction
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
 logger = logging.getLogger(__name__)
-post_link = "https://vk.com/wall-{public_id}_{post_id}"
-VK_PUBLICS_LIST = [57466174, 133717012, 1850339, 90529595, 12022371, 126712296, 150611459, 1744988, 28618880, 27701671,
-                   35098427]
+
+db = DB("seen_links.json")
+
+THRESHOLD_AVITO = 0.75
+THRESHOLD_CIAN = 0.65
+
 
 REQUEST_KWARGS={
     'proxy_url': 'socks5://78.47.225.59:9050',
@@ -22,88 +26,64 @@ REQUEST_KWARGS={
     'read_timeout': 15.
 }
 
-# https://vk.com/topic-12022371_36100298?offset=300
-# https://vk.com/topic-90529595_34531077?offset=1400
-# https://vk.com/topic-150611459_35921948?offset=340
-# https://vk.com/topic-1744988_21328151?offset=30300
-# https://vk.com/topic-28618880_36966519?offset=100
-# https://vk.com/topic-27701671_24755429?offset=15460
+
+def send_message(bot, link):
+    bot.send_message(chat_id="@instantflats",
+                     text=link)
+    db.update(link)
+    
+    
+
+def process_photos(photos):
+    """Process and infer one item from cian/avito feed, 
+    return confidence of good looking flat"""
+    confidences = []
+    for photo_link in photos:
+        im = pseudo_download_img(photo_link)
+        if min(im.shape[:2]) < 128:
+            continue
+        _, good_prob = get_prediction(im)
+        confidences.append(good_prob)
+    
+    return max(confidences)
+    
 
 
-def send_messages(bot):
-    for post in db.flats.find({'sent': False}):
-        bot.send_message(chat_id="@instantflats",
-                         text=post['link'])
-        db.flats.update_one({"text": post['text']}, {"$set": {"sent": True}})
-        time.sleep(0.5)
+def cian_job(context: telegram.ext.CallbackContext):
+    logger.info("Start parsing cian")
+    feed = get_cian_feed()
+    for item in feed:
+        link = item['link']
+        if link not in db:
+            # item has many photos
+            item_result = process_photos(item['photos'])
+            logger.info(f"item result is {item_result}")
+            if item_result > THRESHOLD_CIAN:
+                send_message(context.bot, link)
+            db.update(link)
+    logger.info("End parsing cian")
+        
 
-
-def parse_vk(bot, update):
-    wall_data = []
-    logger.info("Start parsing vk")
-    for public_id in VK_PUBLICS_LIST:
-        wall_data += get_public_updates(public_id, 10)
-        time.sleep(0.5)
-    logger.info("End parsing vk")
-    for post in wall_data:
-        if 'attachments' in post:
-            items = filter(lambda item: item['type'] == "photo", post['attachments'])
-            img_links = [item['photo'].get('photo_604', "") for item in items]
-            img_links = list(filter(lambda x: x != "", img_links))
-            if len(img_links):
-                timestamp = post['date'] * 1000
-                text = post['text']
-                public_id = -post['from_id']
-                post_id = post['id']
-                s = process_text_vk(text)
-                if s and db.flats.find({"text": s}).limit(1).count() == 0:
-                    img_paths = [save_img(link) for link in img_links]
-                    classes = []
-                    for img_path in img_paths:
-                        classes.append(get_prediction(img_path))
-                    if any([c == 1 for c in classes]):
-                        post_id = db.flats.insert_one({
-                            "text": s,
-                            "link": f"https://vk.com/wall-{public_id}_{post_id}",
-                            "from": "vk",
-                            "sent": False,
-                        }).inserted_id
-                else:
-                    logger.info(f"{post_id} is not center room")
-    send_messages(bot)
-
-
-def parse_avito(bot, update):
+def avito_job(context: telegram.ext.CallbackContext):
     logger.info("Start parsing avito")
     feed = get_avito_feed()
     for item in feed:
-        s = process_text_avito(item['text'])
-
-        date = datetime.datetime.strptime(item['updated'], "%Y-%m-%dT%H:%M:%SZ")
-        timestamp = int(date.timestamp())
-        timedelta = datetime.datetime.now() - date
-        if s and timedelta.days < 1 and check_duplicates(s):
-            img_paths = [save_img(link) for link in item['img_links']]
-            classes = []
-            for img_path in img_paths:
-                classes.append(get_prediction(img_path))
-            if any([c == 1 for c in classes]):
-                post_id = db.flats.insert_one({
-                    "text": s,
-                    "link": item['link'],
-                    "from": "avito",
-                    "sent": False,
-                }).inserted_id
+        link = item['link']
+        if link not in db:
+            item_result = process_photos(item['photos'])
+            logger.info(f"item result is {item_result}")
+            if item_result > THRESHOLD_AVITO:
+                send_message(context.bot, item['link'])
+            db.update(item['link'])
     logger.info("End parsing avito")
-    send_messages(bot)
 
 
 def main():
-    print("history count", db.history.count())
-    updater = Updater(TG_TOKEN, request_kwargs=REQUEST_KWARGS)
+    logger.info("starting to work")
+    updater = Updater(TG_TOKEN, use_context=True)#, request_kwargs=REQUEST_KWARGS)
     job_queue = updater.job_queue
-    job_queue.run_repeating(parse_vk, interval=360, first=0)
-    job_queue.run_repeating(parse_avito, interval=600, first=0)
+    job_queue.run_repeating(cian_job, interval=360, first=0)
+    job_queue.run_repeating(avito_job, interval=600, first=0)
     job_queue.start()
 
 
