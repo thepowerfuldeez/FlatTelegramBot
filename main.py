@@ -16,8 +16,8 @@ logger = logging.getLogger(__name__)
 
 db = DB("seen_links.json")
 
-THRESHOLD_AVITO = 0.75
-THRESHOLD_CIAN = 0.65
+THRESHOLD_AVITO = 0.5
+THRESHOLD_CIAN = 0.6
 
 
 REQUEST_KWARGS={
