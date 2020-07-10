@@ -82,8 +82,8 @@ def main():
     logger.info("starting to work")
     updater = Updater(TG_TOKEN, use_context=True)#, request_kwargs=REQUEST_KWARGS)
     job_queue = updater.job_queue
-    job_queue.run_repeating(cian_job, interval=360, first=0)
-    job_queue.run_repeating(avito_job, interval=600, first=0)
+    job_queue.run_repeating(cian_job, interval=3600, first=0)
+    job_queue.run_repeating(avito_job, interval=3600, first=0)
     job_queue.start()
 
 
