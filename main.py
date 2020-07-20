@@ -59,7 +59,7 @@ def cian_job(context: telegram.ext.CallbackContext):
             item_result = process_photos(item['photos'])
             logger.info(f"item result is {item_result}")
             if item_result > THRESHOLD_CIAN:
-                send_message(context.bot, link)
+                send_message(context.bot, f"{item.get('price')} {link}")
             db.update(link)
     logger.info("End parsing cian")
         
