@@ -1,7 +1,11 @@
 import logging
 import time
 import datetime
+import uuid
+import json
+from pathlib import Path
 
+import cv2
 import telegram.ext
 from telegram.ext import Updater, CommandHandler
 
@@ -18,6 +22,7 @@ db = DB("seen_links.json")
 
 THRESHOLD_AVITO = 0.5
 THRESHOLD_CIAN = 0.6
+OUT_DIR = Path("/root/FlatTelegramBot/logs")
 
 
 REQUEST_KWARGS={
@@ -34,19 +39,33 @@ def send_message(bot, link):
     
     
 
-def process_photos(photos):
+def process_photos(photos, save_images=True):
     """Process and infer one item from cian/avito feed, 
     return confidence of good looking flat"""
     confidences = []
+    images = []
     for photo_link in photos:
         im = pseudo_download_img(photo_link)
         if min(im.shape[:2]) < 128:
             continue
         _, good_prob = get_prediction(im)
         confidences.append(good_prob)
+        if save_images:
+            images.append(im)
     
-    return max(confidences)
+    return confidences, images
     
+
+def save_logs(out_dir, item, images, confidences):
+    out_dir.mkdir(exist_ok=True, parents=True)
+    with open(out_dir/"result.json", "w") as f:
+        result = {"link": item['link'], "price": item.get('price'), "images": []}
+        for i in range(1, len(images)+1):
+            cv2.imwrite(str(out_dir/f"{i}.jpg"), images[i-1][...,::-1])
+            result['images'].append({'name': f"{i}.jpg", "confidence": float(confidences[i-1])})
+        json.dump(result, f)
+    print('saved logs for', item)
+
 
 
 def cian_job(context: telegram.ext.CallbackContext):
@@ -56,11 +75,16 @@ def cian_job(context: telegram.ext.CallbackContext):
         link = item['link']
         if link not in db:
             # item has many photos
-            item_result = process_photos(item['photos'])
+            confidences, images = process_photos(item['photos'])
+            item_result = max(confidences)
             logger.info(f"item result is {item_result}")
             if item_result > THRESHOLD_CIAN:
                 send_message(context.bot, f"{item.get('price')} {link}")
             db.update(link)
+            
+            try:
+                save_logs(OUT_DIR/"cian"/uuid.uuid4().hex, item, images, confidences)
+            except Exception as e: print(e)
     logger.info("End parsing cian")
         
 
@@ -70,11 +94,16 @@ def avito_job(context: telegram.ext.CallbackContext):
     for item in feed:
         link = item['link']
         if link not in db:
-            item_result = process_photos(item['photos'])
+            confidences, images = process_photos(item['photos'])
+            item_result = max(confidences)
             logger.info(f"item result is {item_result}")
             if item_result > THRESHOLD_AVITO:
                 send_message(context.bot, item['link'])
             db.update(item['link'])
+
+        try:
+            save_logs(OUT_DIR/"avito"/uuid.uuid4().hex, item, images, confidences)
+        except Exception as e: print(e)
     logger.info("End parsing avito")
 
 
